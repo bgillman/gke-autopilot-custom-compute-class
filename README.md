@@ -47,12 +47,7 @@ https://cloud.google.com/kubernetes-engine/docs/how-to/autopilot-compute-classes
 ---
 ### Instructions
 
-This repo provides the terraform scipts to build the underlying Google Cloud Infra and Deploy GKE Custom Compute Classes for various workload types. Specifically, we'll focus on using Spot Instances in the cluster for cost optimization purposes.
-
-1. Build a new VPC Network and VPC Subnet (network.tf)
-2. Deploy a private vpc-native GKE Autopilot cluster (gke-ap.tf)
-   
-   1. VPC-Native clusters use ip alias for secondary IP ranges. This config uses the Google manaed /17 for Pods and the Google managed 34.118.224.0/20. As a point of reference, this /20 can be used across all of your GKE clusters for 'Services'. Adjust the configuration as needed if you want to leverage your own pre-define IP ranges.
+This repo has examples of various GKE CustomComputeClasses (CCC) and the Deployments that call the CCC. This is not an exhaustive list of options. Check out the reference links below for additioanl details like using CCC cluster wide or in a namespace.
 
 The GKE Autopilot Custom Compute Classes do the following:
 
@@ -60,26 +55,27 @@ The GKE Autopilot Custom Compute Classes do the following:
    * spot-vm-node-selector-class.yaml
    * spot-vm-node-selector-deployment.yaml
   
-   1. This Deloyment & ComputeClass uses `nodeSelector` to automatically provision and managed the node pools made up of Spot instances. However, use this with caution because if GKE Autopilot cannot find or provision a Spot VM (which would carry the required label) and were to try to provision a Standard VM instead, the resulting Standard node might not get the correct label. In this scenario, your Pod would remain in a Pending state
+   This Deloyment & ComputeClass uses `nodeSelector` to automatically provision and managed the node pools made up of Spot instances. However, use this with caution because if GKE Autopilot cannot find or provision a Spot VM (which would carry the required label) and were to try to provision a Standard VM instead, the resulting Standard node might not get the correct label. In this scenario, your Pod would remain in a Pending state
    
 2. ### Spot VM Fallback to Standard VM
    * spot-fallback-to-std-class.yaml
    * spot-fallback-to-std.deployment.yaml
   
-   1. This Deloyment & ComputeClass is used to primarly schedule Pods to GKE Spot VM nodes, while allowing them to run on standard nodes as a fallback, this is a common-pattern for cost-sensative, fault-tolerant workloads. The annotation ` preferredDuringSchedulingIgnoredDuringExecution` in the Deployment is a means to express a preference rather than set a hard requirement. In the ComputeClass yaml, the `optimizeRulePriority` when set to true, will automatically and gradually move your workload from the lower-priority (Standard) node back to a newly available higher-priority (Spot) node to maximize cost savings.
+   This Deloyment & ComputeClass is used to primarly schedule Pods to GKE Spot VM nodes, while allowing them to run on standard nodes as a fallback, this is a common-pattern for cost-sensative, fault-tolerant workloads. The annotation ` preferredDuringSchedulingIgnoredDuringExecution` in the Deployment is a means to express a preference rather than set a hard requirement. In the ComputeClass yaml, the `optimizeRulePriority` when set to true, will automatically and gradually move your workload from the lower-priority (Standard) node back to a newly available higher-priority (Spot) node to maximize cost savings.
 
 3. ### Autopilot Spot VM
    * autopilot-spot-class.yaml
    * autopilot-spot-deployment.yaml
   
-   1. This Deloyment & ComputeClass is most likey the best approach to take with GKE AP and using Spot VMs. Autopilot abstracts node management. To use Spot VMs, you simply apply the `nodeSelector` using the specific GKE label: `cloud.google.com/compute-class: autopilot-spot` is applied via the Deployment, Autopilot automatically provisions a Spot VM node that matches the Pod's resource requests.
+   This Deloyment & ComputeClass is most likey the best approach to take with GKE AP and using Spot VMs. Autopilot abstracts node management. To use Spot VMs, you simply apply the `nodeSelector` using the specific GKE label: `cloud.google.com/compute-class: autopilot-spot` is applied via the Deployment, Autopilot automatically provisions a Spot VM node that matches the Pod's resource requests.
    
    **Key Consideration for #3, is that this Autopilot configuration is a Spot-only requirement. If a Spot VM cannot be provisioned or is unavailable, these Pods will remain in a *Pending* state until capacity becomes available. There is no automatic fallback to a non-Spot VM**
    
 4. ### High CPU Workload - Requires Spot VM
       * high-cpu-spot-class.yaml
       * high-cpu-deployment.yaml
-   1. This Deloyment & ComputeClass defines a prioritized strategy for GKE Autopilot to provision nodes for workloads that require high-CPU performance at the lowest possible cost (Spot VMs), while ensuring the workload is eventually scheduled. The fallback priorities are 
+  
+   This Deloyment & ComputeClass defines a prioritized strategy for GKE Autopilot to provision nodes for workloads that require high-CPU performance at the lowest possible cost (Spot VMs), while ensuring the workload is eventually scheduled. The fallback priorities are 
       1. First choice: Provision a C3 (Compute-Optimized) Spot VM. C3 is GKE's high-performance, compute-optimized machine series, ideal for CPU-intensive tasks. Using `spot: true` makes it cost-effective.
       2. Second choice: If C3 Spot capacity is unavailable, fall back to a N2 (Standard/High-Performance) Spot VM. N2 is a strong general-purpose machine and is the next best choice for high-CPU needs.
       3. Third choice: If N2 Spot is also unavailable, fall back to an E2 (Standard/Cost-Effective) Spot VM. E2 is the default, general-purpose machine family in Autopilot.
@@ -104,7 +100,7 @@ The GKE Autopilot Custom Compute Classes do the following:
 6. ### High Memory Workload
    * high-memory-class.yaml
    * high-memory-deployment.yaml
-   * 
+  
    This Deloyment & ComputeClass are for a workload that is memory-intensive, requiring reliable, large amounts of RAM. Resources and Limits are defined and are the guaranteed minimum resources. The generous memory request is the primary driver for GKE Autopilot, requiring it to provision high-memory machine types to fit the Pods.
 
    The ComputeClass implements a clear priority order to provision nodes that are well-suited for high-memory, general-purpose workloads, while including a cost-saving fallback.
