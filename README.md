@@ -47,7 +47,7 @@ https://cloud.google.com/kubernetes-engine/docs/how-to/autopilot-compute-classes
 ---
 ### Instructions
 
-This repo has examples of various GKE CustomComputeClasses (CCC) and the Deployments that call the CCC. This is not an exhaustive list of options. Check out the reference links below for additioanl details like using CCC cluster wide or in a namespace.
+This repo has examples of various GKE CustomComputeClasses (CCC) and the Deployments that call the CCC. This is not an exhaustive list of options. Check out the reference links below for additioanl details like using CCC cluster wide or in a namespace. It assumes you have deployed your GKE Autopilot cluster and have the necessary administrative IAM roles to perform deploying artifacts to the cluster.
 
 The GKE Autopilot Custom Compute Classes do the following:
 
