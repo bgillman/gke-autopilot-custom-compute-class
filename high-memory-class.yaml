@@ -1,0 +1,23 @@
+apiVersion: cloud.google.com/v1
+kind: ComputeClass
+metadata:
+  name: high-memory-class
+spec:
+  # Enable node pool auto-creation for Autopilot
+  autopilot:
+    enabled: true
+  
+  # Simplified priority rules - let Autopilot choose appropriate sizes
+  priorities:
+    # Prefer N2 highmem machines
+    - machineFamily: n2
+    
+    # Fallback to N2D machines
+    - machineFamily: n2d
+    
+    # Final fallback to E2 (Autopilot default)
+    - machineFamily: e2
+      spot: true
+  
+  # Allow Autopilot to scale with any available machine type
+  whenUnsatisfiable: ScaleUpAnyway

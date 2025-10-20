@@ -1,0 +1,16 @@
+apiVersion: cloud.google.com/v1
+kind: ComputeClass
+metadata:
+  name: spot
+spec:
+  # The Autopilot cluster autoscaler will only try this one priority.
+  priorities:
+    # 1. Highest (and only) Priority: Request Spot VMs
+    - spot: true
+  
+  # Define what GKE should do if the single priority (Spot VMs) is unsatisfiable.
+  # DoNotScaleUp is typically used when you MUST have a specific attribute (like Spot).
+  # If you choose ScaleUpAnyway, GKE might scale up a default/Standard node if Spot 
+  # is unavailable, but the deployment's nodeSelector might prevent the Pod from scheduling 
+  # on it if the node doesn't get the 'cloud.google.com/compute-class: "spot"' label.
+  whenUnsatisfiable: DoNotScaleUp

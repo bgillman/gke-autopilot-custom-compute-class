@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-hybrid-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: spot-fallback-std
+  template:
+    metadata:
+      labels:
+        app: spot-fallback-std
+    spec:
+      affinity:
+        nodeAffinity:
+          # Soft preference for the 'spot' CustomComputeClass (weight 100)
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: cloud.google.com/compute-class
+                operator: In
+                values:
+                - "spot"
+      tolerations:
+      # Allows scheduling on GKE Spot nodes (which are tainted with NoSchedule)
+      - key: cloud.google.com/gke-spot
+        operator: Equal
+        value: "true"
+        effect: NoSchedule
+      containers:
+      - name: my-container
+        image: nginx:latest
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"

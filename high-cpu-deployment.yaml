@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: high-cpu-app
+  namespace: high-cpu
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: high-cpu-app
+  template:
+    metadata:
+      labels:
+        app: high-cpu-app
+    spec:
+      # Request the custom compute class using nodeSelector
+      nodeSelector:
+        cloud.google.com/compute-class: high-cpu-spot
+      
+      containers:
+      - name: cpu-intensive-app
+        image: nginx:latest
+        
+        # Moderate CPU request that Autopilot can easily provision
+        resources:
+          requests:
+            cpu: "4"
+            memory: "4Gi"
+          limits:
+            cpu: "8"
+            memory: "8Gi"
+        
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "High-CPU workload started on node: $(hostname)"
+            echo "Allocated CPU: 4 cores, Memory: 4Gi"
+            echo "Machine type: $(curl -s -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/machine-type | cut -d'/' -f4)"
+            tail -f /dev/null
+        
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - echo "alive"
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - echo "ready"
+          initialDelaySeconds: 5
+          periodSeconds: 10

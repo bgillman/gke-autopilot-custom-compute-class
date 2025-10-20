@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-autopilot-spot-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: spot-ccc
+  template:
+    metadata:
+      labels:
+        app: spot-ccc
+    spec:
+      nodeSelector:
+        # Selects the custom 'my-autopilot-spot' ComputeClass
+        cloud.google.com/compute-class: autopilot-spot
+      containers:
+      - name: my-container
+        image: nginx:latest
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+

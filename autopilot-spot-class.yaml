@@ -1,0 +1,7 @@
+apiVersion: compute.gke.io/v1
+kind: CustomComputeClass
+metadata:
+  name: autopilot-spot
+spec:
+  nodeSelector:
+    cloud.google.com/gke-spot: "true"

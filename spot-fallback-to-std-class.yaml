@@ -1,0 +1,20 @@
+apiVersion: cloud.google.com/v1
+kind: ComputeClass
+metadata:
+  name: spot-fallback-std
+spec:
+  # The Autopilot cluster autoscaler will try to provision nodes in this order.
+  priorities:
+    # 1. Highest Priority: Prefer Spot VMs (Cost-Optimized)
+    - spot: true
+    # 2. Fallback Priority: Fall back to Standard (on-demand) VMs if Spot is unavailable
+    - spot: false
+  
+  # Optional: Configure GKE to automatically migrate workloads back to the higher priority (Spot) nodes 
+  # when Spot capacity becomes available. This is highly recommended for cost optimization.
+  activeMigration:
+    optimizeRulePriority: true
+
+  # Optional: Define what GKE should do if all priorities are unsatisfiable.
+  # ScaleUpAnyway is generally the safest choice for availability.
+  whenUnsatisfiable: ScaleUpAnyway

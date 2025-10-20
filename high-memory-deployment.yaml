@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: high-memory-app
+  namespace: high-mem
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: high-memory-app
+  template:
+    metadata:
+      labels:
+        app: high-memory-app
+    spec:
+      # Request the custom compute class using nodeSelector
+      nodeSelector:
+        cloud.google.com/compute-class: high-memory-class
+      
+      containers:
+      - name: memory-intensive-app
+        image: nginx:latest
+        
+        # Moderate memory request that Autopilot can easily provision
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+          limits:
+            memory: "16Gi"
+            cpu: "4"
+        
+        command: ["/bin/sh"]
+        args:
+          - -c
+          - |
+            echo "High-memory workload started on node: $(hostname)"
+            echo "Allocated memory: 8Gi, CPU: 2 cores"
+            echo "Machine type: $(curl -s -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/machine-type | cut -d'/' -f4)"
+            tail -f /dev/null
+        
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - echo "alive"
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - echo "ready"
+          initialDelaySeconds: 5
+          periodSeconds: 10

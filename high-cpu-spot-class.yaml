@@ -1,0 +1,25 @@
+apiVersion: cloud.google.com/v1
+kind: ComputeClass
+metadata:
+  name: high-cpu-spot
+spec:
+  # Enable node pool auto-creation for Autopilot
+  autopilot:
+    enabled: true
+  
+  # Simplified priority rules - let Autopilot choose appropriate sizes
+  priorities:
+    # Prefer C3 compute-optimized machines with Spot VMs
+    - machineFamily: c3
+      spot: true
+    
+    # Fallback to N2 highcpu with Spot VMs
+    - machineFamily: n2
+      spot: true
+    
+    # Final fallback to E2 (Autopilot default) with Spot VMs
+    - machineFamily: e2
+      spot: true
+  
+  # Allow Autopilot to scale with any available machine type
+  whenUnsatisfiable: ScaleUpAnyway

@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: high-cpu-spot-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: high-cpu-spot
+  template:
+    metadata:
+      labels:
+        app: high-cpu-spot
+    spec:
+      nodeSelector:
+        # Use the 'high-cpu-spot' CustomComputeClass
+        cloud.google.com/compute-class: "high-cpu-spot"
+      
+      containers:
+      - name: high-cpu-container
+        image: nginx:latest
+        resources:
+          requests:
+            # Resource requests are crucial for AP provisioning
+            cpu: "4"        # Defines the minimum size of the C3 Spot node
+            memory: "8Gi"   # Defines the minimum size of the C3 Spot node
