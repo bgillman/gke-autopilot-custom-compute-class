@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spot-workload-deployment
+  labels:
+    app: spot-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: spot-app
+  template:
+    metadata:
+      labels:
+        app: spot-app
+    spec:
+      # --- REQUIRED FOR AUTOPILOT SPOT ---
+      nodeSelector:
+        # This selects the built-in Autopilot Spot compute class, 
+        # which provides discounted, interruptible compute.
+        cloud.google.com/compute-class: "autopilot-spot"
+      
+      # --- HIGHLY RECOMMENDED FOR SPOT PODS ---
+      # This provides a 25-second window for the Pod to gracefully 
+      # shut down when a Spot node is about to be preempted.
+      terminationGracePeriodSeconds: 25 
+      
+      containers:
+      - name: my-spot-container
+        image: nginx:latest
+        resources:
+          # Resource requests are mandatory in Autopilot. 
+          # You must meet the minimum requirements for the autopilot-spot class.
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          # Limits are optional but recommended for stability.
+          limits:
+            cpu: "1"
+            memory: "2Gi"

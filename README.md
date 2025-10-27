@@ -112,3 +112,5 @@ The GKE Autopilot Custom Compute Classes do the following:
    **E2 Spot** Cost & Availability Last Resort. As the final technical fallback, GKE attempts to use a cost-effective E2 Spot VM. This sacrifices the high-performance machine family preference but ensures the workload gets scheduled at a potentially much lower cost, accepting the risk of preemption.
 
    
+
+   
