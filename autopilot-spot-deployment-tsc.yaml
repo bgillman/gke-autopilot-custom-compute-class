@@ -1,0 +1,54 @@
+# This YAML file defines a Kubernetes Deployment that runs a workload on GKE Autopilot.
+# It is configured for high availability (HA) and cost-effectiveness by:
+# 1. Running multiple replicas of the application.
+# 2. Spreading the replicas across different nodes using topologySpreadConstraints to minimize the impact of a single node failure.
+# 3. Using a custom compute class that prioritizes Spot VMs for cost savings, with a fallback to on-demand VMs for reliability.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  # The name of the deployment.
+  name: my-spot-fallback-deployment-tsc
+spec:
+  # `replicas: 3` ensures that three instances (pods) of the application are running.
+  # This is a key part of the high-availability setup. If one pod fails, the others can continue to handle traffic.
+  replicas: 3
+  selector:
+    matchLabels:
+      # This selector is used by the deployment to find which pods to manage.
+      app: spot-fallback-tsc
+  template:
+    metadata:
+      labels:
+        # The labels applied to the pods created by this deployment.
+        app: spot-fallback-tsc
+    spec:
+      # `topologySpreadConstraints` provides a more flexible way to control how pods are spread across your cluster.
+      topologySpreadConstraints:
+        # `maxSkew` describes the degree to which pods may be unevenly distributed.
+        # A value of 1 means that the number of pods on any two nodes in the same topology domain should not differ by more than 1.
+      - maxSkew: 1
+        # `topologyKey` is the key of node labels. Nodes with the same label are considered to be in the same topology.
+        # Using "kubernetes.io/hostname" spreads pods across individual nodes.
+        topologyKey: "kubernetes.io/hostname"
+        # `whenUnsatisfiable` indicates how to deal with a pod if it doesn't satisfy the spread constraint.
+        # 'ScheduleAnyway' tells the scheduler to still schedule the pod, but to prioritize nodes that minimize the skew.
+        # This acts as a "soft" constraint, improving availability without preventing scheduling.
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            # This selector tells the constraint which pods to consider when calculating the spread.
+            app: spot-fallback-tsc
+      # The `nodeSelector` specifies which nodes the pods can be scheduled on.
+      nodeSelector:
+        # This line is crucial for using the custom compute class.
+        # It tells GKE to schedule these pods on nodes that are part of the 'spot-fallback-std' compute class.
+        # This class is configured to prioritize Spot VMs and fallback to standard VMs.
+        cloud.google.com/compute-class: spot-fallback-std
+      containers:
+      - name: my-container
+        image: nginx:latest # A simple nginx image is used as an example.
+        # Resource requests are important for GKE Autopilot to provision the correct amount of resources for the pods.
+        resources:
+          requests:
+            cpu: "500m" # Requests half a CPU core.
+            memory: "1Gi" # Requests 1 Gibibyte of memory.
