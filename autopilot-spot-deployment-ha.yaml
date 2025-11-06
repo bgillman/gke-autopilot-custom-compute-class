@@ -1,0 +1,48 @@
+# This YAML file defines a Kubernetes Deployment that runs a workload on GKE Autopilot using Spot VMs.
+# It is configured for high availability (HA) by running multiple replicas and spreading them across different nodes.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-autopilot-spot-deployment-ha
+spec:
+  # `replicas: 3` ensures that three instances (pods) of the application are running.
+  # This is a key part of the high-availability setup. If one pod fails, the others can continue to handle traffic.
+  replicas: 3
+  selector:
+    matchLabels:
+      app: spot-ccc-ha
+  template:
+    metadata:
+      labels:
+        app: spot-ccc-ha
+    spec:
+      # The affinity section controls how pods are scheduled.
+      affinity:
+        # `podAntiAffinity` is used to prevent multiple pods of the same application from being scheduled on the same node.
+        podAntiAffinity:
+          # `requiredDuringSchedulingIgnoredDuringExecution` means the scheduler MUST NOT schedule pods in a way that violates the anti-affinity rule.
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - spot-ccc-ha
+            # `topologyKey: "kubernetes.io/hostname"` tells the scheduler to use the node's hostname to enforce the anti-affinity.
+            # This effectively means that no two pods with the label "app: spot-ccc-ha" will be placed on the same node,
+            # which is crucial for high availability.
+            topologyKey: "kubernetes.io/hostname"
+      # The nodeSelector specifies which nodes the pods can be scheduled on.
+      nodeSelector:
+        # This line is crucial for using a custom compute class in GKE Autopilot.
+        # It tells GKE to schedule these pods on nodes that are part of the 'autopilot-spot' compute class.
+        # This compute class is configured to use Spot VMs, which are cheaper but can be preempted.
+        cloud.google.com/compute-class: autopilot-spot
+      containers:
+      - name: my-container
+        image: nginx:latest # A simple nginx image is used as an example.
+        # Resource requests are important for GKE Autopilot to provision the correct amount of resources for the pods.
+        resources:
+          requests:
+            cpu: "500m" # Requests half a CPU core.
+            memory: "1Gi" # Requests 1 Gibibyte of memory.

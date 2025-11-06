@@ -1,7 +1,11 @@
+# This YAML file defines a Kubernetes Deployment for a high-memory application.
+# It's configured to run on the 'high-memory-class' ComputeClass and includes
+# specific resource requests, custom commands, and health checks.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: high-memory-app
+  # Deploying to a dedicated namespace is a good practice for organizing workloads.
   namespace: high-mem
 spec:
   replicas: 2
@@ -13,23 +17,27 @@ spec:
       labels:
         app: high-memory-app
     spec:
-      # Request the custom compute class using nodeSelector
+      # This nodeSelector directs GKE to schedule the pods on nodes from the 'high-memory-class' ComputeClass.
+      # This ensures the application runs on hardware optimized for memory-intensive tasks.
       nodeSelector:
         cloud.google.com/compute-class: high-memory-class
-      
+
       containers:
       - name: memory-intensive-app
         image: nginx:latest
-        
-        # Moderate memory request that Autopilot can easily provision
+
+        # The resource requests and limits are critical for a high-memory application.
+        # Requests tell GKE how much memory to allocate, and limits prevent the container from using too much.
         resources:
           requests:
-            memory: "8Gi"
-            cpu: "2"
+            memory: "8Gi" # Requests 8 Gibibytes of memory.
+            cpu: "2"      # Requests 2 CPU cores.
           limits:
-            memory: "16Gi"
-            cpu: "4"
-        
+            memory: "16Gi" # The container can use up to 16 Gibibytes of memory.
+            cpu: "4"       # The container can burst up to 4 CPU cores if available.
+
+        # This command overrides the default container command to print environment information and then wait.
+        # This is useful for debugging and ensuring the container remains running.
         command: ["/bin/sh"]
         args:
           - -c
@@ -38,21 +46,25 @@ spec:
             echo "Allocated memory: 8Gi, CPU: 2 cores"
             echo "Machine type: $(curl -s -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/machine-type | cut -d'/' -f4)"
             tail -f /dev/null
-        
+
+        # The livenessProbe checks if the container is still running.
+        # If this probe fails, Kubernetes will restart the container.
         livenessProbe:
           exec:
             command:
             - sh
             - -c
             - echo "alive"
-          initialDelaySeconds: 10
-          periodSeconds: 30
-        
+          initialDelaySeconds: 10 # Wait 10 seconds before the first probe.
+          periodSeconds: 30       # Probe every 30 seconds.
+
+        # The readinessProbe checks if the container is ready to serve traffic.
+        # If this probe fails, Kubernetes will not route traffic to this pod.
         readinessProbe:
           exec:
             command:
             - sh
             - -c
             - echo "ready"
-          initialDelaySeconds: 5
-          periodSeconds: 10
+          initialDelaySeconds: 5 # Wait 5 seconds before the first probe.
+          periodSeconds: 10      # Probe every 10 seconds.

@@ -1,25 +1,30 @@
+# This YAML file defines a GKE Autopilot ComputeClass named 'high-cpu-spot'.
+# This ComputeClass is designed for CPU-intensive workloads that can tolerate the preemption of Spot VMs.
+# It uses a prioritized list of machine families, all configured to use Spot VMs for cost savings.
 apiVersion: cloud.google.com/v1
 kind: ComputeClass
 metadata:
   name: high-cpu-spot
 spec:
-  # Enable node pool auto-creation for Autopilot
+  # This section enables the ComputeClass for use with GKE Autopilot.
   autopilot:
     enabled: true
-  
-  # Simplified priority rules - let Autopilot choose appropriate sizes
+
+  # The 'priorities' section defines a list of machine families to use, in order of preference.
+  # All machine families in this list are configured with 'spot: true'.
   priorities:
-    # Prefer C3 compute-optimized machines with Spot VMs
+    # 1. The first choice is the 'c3' machine family (compute-optimized) using Spot VMs.
     - machineFamily: c3
       spot: true
-    
-    # Fallback to N2 highcpu with Spot VMs
+
+    # 2. If 'c3' Spot VMs are not available, the next choice is the 'n2' machine family using Spot VMs.
     - machineFamily: n2
       spot: true
-    
-    # Final fallback to E2 (Autopilot default) with Spot VMs
+
+    # 3. As a final fallback, Autopilot will use 'e2' Spot VMs.
     - machineFamily: e2
       spot: true
-  
-  # Allow Autopilot to scale with any available machine type
+
+  # 'ScaleUpAnyway' instructs Autopilot to scale up a node pool using any available machine type if none of the specified options are available.
+  # This helps ensure that the workload can be scheduled even if the preferred Spot VMs are not available.
   whenUnsatisfiable: ScaleUpAnyway

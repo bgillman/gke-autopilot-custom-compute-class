@@ -1,3 +1,5 @@
+# This YAML file defines a Kubernetes Deployment that is configured to run exclusively on Spot VMs.
+# It uses a nodeSelector to request the 'spot' ComputeClass.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,8 +14,11 @@ spec:
       labels:
         app: spot-app
     spec:
+      # The nodeSelector is used to constrain pods to nodes with specific labels.
       nodeSelector:
-        # This requests that the Pod runs on a node with the 'spot' CustomComputeClass
+        # This selector requests that the Pod be scheduled on a node belonging to the 'spot' ComputeClass.
+        # Because the 'spot' ComputeClass is configured with 'whenUnsatisfiable: DoNotScaleUp',
+        # this deployment will only run if Spot VMs are available.
         cloud.google.com/compute-class: "spot"
       containers:
       - name: my-container
@@ -22,4 +27,3 @@ spec:
           requests:
             cpu: "500m"
             memory: "1Gi"
-

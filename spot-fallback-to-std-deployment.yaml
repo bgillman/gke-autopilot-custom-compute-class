@@ -1,3 +1,5 @@
+# This YAML file defines a Kubernetes Deployment that demonstrates a hybrid strategy
+# for using Spot VMs with a fallback to standard VMs.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,23 +14,30 @@ spec:
       labels:
         app: spot-fallback-std
     spec:
+      # The 'affinity' section controls how pods are scheduled.
       affinity:
+        # 'nodeAffinity' is used to express a preference or requirement for certain nodes.
         nodeAffinity:
-          # Soft preference for the 'spot' CustomComputeClass (weight 100)
+          # 'preferredDuringSchedulingIgnoredDuringExecution' specifies a "soft" preference.
+          # The scheduler will try to meet this preference, but it's not a hard requirement.
           preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
+          - weight: 100 # The weight indicates the strength of the preference (1-100).
             preference:
               matchExpressions:
               - key: cloud.google.com/compute-class
                 operator: In
                 values:
-                - "spot"
+                - "spot" # This expresses a strong preference for the 'spot' ComputeClass.
+
+      # 'tolerations' allow pods to be scheduled on nodes with matching taints.
+      # GKE Spot nodes are tainted with 'cloud.google.com/gke-spot="true":NoSchedule'.
+      # This toleration is necessary to allow pods to be scheduled on Spot VMs.
       tolerations:
-      # Allows scheduling on GKE Spot nodes (which are tainted with NoSchedule)
       - key: cloud.google.com/gke-spot
         operator: Equal
         value: "true"
         effect: NoSchedule
+
       containers:
       - name: my-container
         image: nginx:latest

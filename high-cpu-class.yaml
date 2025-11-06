@@ -1,23 +1,31 @@
+# This YAML file defines a GKE Autopilot ComputeClass named 'high-cpu-class'.
+# This ComputeClass is designed for workloads that require high CPU performance.
+# It uses a prioritized list of machine families to instruct Autopilot on which VMs to use.
 apiVersion: cloud.google.com/v1
 kind: ComputeClass
 metadata:
   name: high-cpu-class
 spec:
-  # Enable node pool auto-creation for Autopilot
+  # This section enables the ComputeClass for use with GKE Autopilot.
+  # When enabled, Autopilot will automatically create node pools based on the specifications of this ComputeClass.
   autopilot:
     enabled: true
-  
-  # Simplified priority rules - let Autopilot choose appropriate sizes
+
+  # The 'priorities' section defines a list of machine families to use, in order of preference.
+  # Autopilot will attempt to schedule workloads on the first machine family in the list that has available capacity.
   priorities:
-    # Prefer C3 compute-optimized machines
+    # 1. The first choice is the 'c3' machine family, which is a compute-optimized family ideal for CPU-intensive workloads.
     - machineFamily: c3
-    
-    # Fallback to N2 highcpu
+
+    # 2. If 'c3' is not available, the next choice is the 'n2' machine family, another good option for high-performance workloads.
     - machineFamily: n2
-    
-    # Final fallback to E2 (Autopilot default)
+
+    # 3. As a final fallback, if neither 'c3' nor 'n2' are available, Autopilot will use 'e2' Spot VMs.
+    # This provides a cost-effective option, but with the caveat that the VMs can be preempted.
     - machineFamily: e2
       spot: true
-  
-  # Allow Autopilot to scale with any available machine type
+
+  # The 'whenUnsatisfiable' field tells Autopilot what to do if none of the specified machine families are available.
+  # 'ScaleUpAnyway' instructs Autopilot to scale up a node pool using any available machine type,
+  # ensuring the workload can still be scheduled. This is a good practice to avoid scheduling failures.
   whenUnsatisfiable: ScaleUpAnyway

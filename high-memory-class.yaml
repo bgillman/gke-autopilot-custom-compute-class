@@ -1,23 +1,27 @@
+# This YAML file defines a GKE Autopilot ComputeClass named 'high-memory-class'.
+# This ComputeClass is designed for workloads that require a large amount of memory.
+# It uses a prioritized list of machine families to guide Autopilot's node selection.
 apiVersion: cloud.google.com/v1
 kind: ComputeClass
 metadata:
   name: high-memory-class
 spec:
-  # Enable node pool auto-creation for Autopilot
+  # This enables the ComputeClass for use with GKE Autopilot, allowing automatic node pool creation.
   autopilot:
     enabled: true
-  
-  # Simplified priority rules - let Autopilot choose appropriate sizes
+
+  # The 'priorities' section lists machine families in order of preference.
   priorities:
-    # Prefer N2 highmem machines
+    # 1. The first choice is the 'n2' machine family, which offers high-memory configurations.
     - machineFamily: n2
-    
-    # Fallback to N2D machines
+
+    # 2. If 'n2' is not available, the fallback is the 'n2d' machine family, another good option for memory-intensive workloads.
     - machineFamily: n2d
-    
-    # Final fallback to E2 (Autopilot default)
+
+    # 3. As a final fallback, Autopilot will use 'e2' Spot VMs, providing a cost-effective option.
     - machineFamily: e2
       spot: true
-  
-  # Allow Autopilot to scale with any available machine type
+
+  # 'ScaleUpAnyway' ensures that if none of the preferred machine families are available,
+  # Autopilot will still scale up a node pool with any available machine type to run the workload.
   whenUnsatisfiable: ScaleUpAnyway

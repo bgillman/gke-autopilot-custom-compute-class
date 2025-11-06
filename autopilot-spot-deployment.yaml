@@ -1,8 +1,11 @@
+# This YAML file defines a Kubernetes Deployment that runs a workload on GKE Autopilot.
+# It is configured to use the 'autopilot-spot' ComputeClass, which means the pods will be scheduled on Spot VMs.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: my-autopilot-spot-deployment
 spec:
+  # `replicas: 3` ensures that three instances (pods) of the application are running.
   replicas: 3
   selector:
     matchLabels:
@@ -12,14 +15,17 @@ spec:
       labels:
         app: spot-ccc
     spec:
+      # The nodeSelector specifies which nodes the pods can be scheduled on.
       nodeSelector:
-        # Selects the custom 'my-autopilot-spot' ComputeClass
+        # This line is crucial for using a custom compute class in GKE Autopilot.
+        # It tells GKE to schedule these pods on nodes that are part of the 'autopilot-spot' compute class.
+        # This compute class is configured to use Spot VMs.
         cloud.google.com/compute-class: autopilot-spot
       containers:
       - name: my-container
-        image: nginx:latest
+        image: nginx:latest # A simple nginx image is used as an example.
+        # Resource requests are important for GKE Autopilot to provision the correct amount of resources for the pods.
         resources:
           requests:
-            cpu: "500m"
-            memory: "1Gi"
-
+            cpu: "500m" # Requests half a CPU core.
+            memory: "1Gi" # Requests 1 Gibibyte of memory.

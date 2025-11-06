@@ -1,3 +1,5 @@
+# This YAML file defines a Kubernetes Deployment for a high-CPU application on Spot VMs.
+# It is configured to use the 'high-cpu-spot' ComputeClass.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -12,15 +14,17 @@ spec:
       labels:
         app: high-cpu-spot
     spec:
+      # This nodeSelector tells GKE to schedule the pods on nodes belonging to the 'high-cpu-spot' ComputeClass.
+      # This ensures the application runs on high-CPU Spot VMs, providing a cost-effective solution for CPU-intensive, fault-tolerant workloads.
       nodeSelector:
-        # Use the 'high-cpu-spot' CustomComputeClass
         cloud.google.com/compute-class: "high-cpu-spot"
-      
+
       containers:
       - name: high-cpu-container
         image: nginx:latest
+        # The resource requests are essential for GKE Autopilot to provision the correct node size.
+        # The requested CPU and memory will influence the size of the C3 Spot node that Autopilot creates.
         resources:
           requests:
-            # Resource requests are crucial for AP provisioning
-            cpu: "4"        # Defines the minimum size of the C3 Spot node
-            memory: "8Gi"   # Defines the minimum size of the C3 Spot node
+            cpu: "4"        # Requests 4 CPU cores.
+            memory: "8Gi"   # Requests 8 Gibibytes of memory.

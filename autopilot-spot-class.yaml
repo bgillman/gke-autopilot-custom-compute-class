@@ -1,7 +1,16 @@
+# This YAML file defines a custom ComputeClass for GKE Autopilot named 'autopilot-spot'.
+# ComputeClasses allow you to create logical groups of nodes with specific hardware or software configurations.
+# This ComputeClass is designed to run workloads on Spot VMs, which are significantly cheaper than standard VMs.
 apiVersion: compute.gke.io/v1
 kind: CustomComputeClass
 metadata:
+  # The name of the custom ComputeClass. This name will be used in the nodeSelector of a Pod to request this class.
   name: autopilot-spot
 spec:
+  # The nodeSelector specifies the labels that a node must have to be part of this ComputeClass.
   nodeSelector:
+    # This label is the key to selecting Spot VMs in GKE.
+    # GKE automatically labels nodes that are Spot VMs with 'cloud.google.com/gke-spot: "true"'.
+    # By including this selector, any pod requesting the 'autopilot-spot' ComputeClass
+    # will be scheduled on a node that is a Spot VM.
     cloud.google.com/gke-spot: "true"

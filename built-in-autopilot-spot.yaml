@@ -1,3 +1,5 @@
+# This YAML file defines a Kubernetes Deployment that demonstrates how to use the built-in 'autopilot-spot' ComputeClass in GKE Autopilot.
+# The built-in 'autopilot-spot' class is a simple way to run workloads on Spot VMs without defining a custom ComputeClass.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -15,26 +17,30 @@ spec:
         app: spot-app
     spec:
       # --- REQUIRED FOR AUTOPILOT SPOT ---
+      # The nodeSelector is used to request a specific ComputeClass.
       nodeSelector:
-        # This selects the built-in Autopilot Spot compute class, 
-        # which provides discounted, interruptible compute.
+        # This selects the built-in Autopilot Spot compute class.
+        # GKE will schedule these pods on nodes that are Spot VMs, which are provided at a lower cost than standard VMs but can be preempted.
         cloud.google.com/compute-class: "autopilot-spot"
-      
+
       # --- HIGHLY RECOMMENDED FOR SPOT PODS ---
-      # This provides a 25-second window for the Pod to gracefully 
-      # shut down when a Spot node is about to be preempted.
-      terminationGracePeriodSeconds: 25 
-      
+      # When a Spot VM is about to be preempted, GKE sends a notification.
+      # `terminationGracePeriodSeconds` gives your pod a chance to shut down gracefully.
+      # The default is 30 seconds, but for Spot pods, it's recommended to set it to a value that allows for cleanup,
+      # but is not too long, as the node will be terminated regardless. 25 seconds is a common choice.
+      terminationGracePeriodSeconds: 25
+
       containers:
       - name: my-spot-container
         image: nginx:latest
         resources:
-          # Resource requests are mandatory in Autopilot. 
-          # You must meet the minimum requirements for the autopilot-spot class.
+          # Resource requests are mandatory in GKE Autopilot.
+          # You must specify the CPU and memory your container needs to run.
+          # These requests must meet the minimum requirements for the 'autopilot-spot' class.
           requests:
             cpu: "500m"
             memory: "1Gi"
-          # Limits are optional but recommended for stability.
+          # Resource limits are optional but recommended to prevent a container from consuming too many resources and affecting other pods on the same node.
           limits:
             cpu: "1"
             memory: "2Gi"

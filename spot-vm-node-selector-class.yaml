@@ -1,16 +1,19 @@
+# This YAML file defines a GKE ComputeClass named 'spot'.
+# This class is configured to exclusively target Spot VMs and will not provision
+# any other type of node if Spot VMs are unavailable.
 apiVersion: cloud.google.com/v1
 kind: ComputeClass
 metadata:
   name: spot
 spec:
-  # The Autopilot cluster autoscaler will only try this one priority.
+  # The 'priorities' section lists the node provisioning preferences.
   priorities:
-    # 1. Highest (and only) Priority: Request Spot VMs
+    # 1. Highest (and only) Priority: This ComputeClass will only ever request Spot VMs.
     - spot: true
-  
-  # Define what GKE should do if the single priority (Spot VMs) is unsatisfiable.
-  # DoNotScaleUp is typically used when you MUST have a specific attribute (like Spot).
-  # If you choose ScaleUpAnyway, GKE might scale up a default/Standard node if Spot 
-  # is unavailable, but the deployment's nodeSelector might prevent the Pod from scheduling 
-  # on it if the node doesn't get the 'cloud.google.com/compute-class: "spot"' label.
+
+  # 'whenUnsatisfiable' defines the behavior when the requested node type (Spot VM) is not available.
+  # 'DoNotScaleUp' instructs GKE not to provision any other type of node.
+  # This is a strict requirement, meaning that if Spot VMs are not available,
+  # pods requesting this ComputeClass will not be scheduled.
+  # This is useful for workloads that are designed to run only on Spot VMs and should not run on more expensive standard VMs.
   whenUnsatisfiable: DoNotScaleUp

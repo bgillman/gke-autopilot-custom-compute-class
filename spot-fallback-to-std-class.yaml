@@ -1,20 +1,29 @@
+# This YAML file defines a GKE ComputeClass named 'spot-fallback-std'.
+# This class is designed to prioritize cost savings by using Spot VMs,
+# but it also provides a fallback to standard on-demand VMs to ensure workload availability.
 apiVersion: cloud.google.com/v1
 kind: ComputeClass
 metadata:
   name: spot-fallback-std
 spec:
-  # The Autopilot cluster autoscaler will try to provision nodes in this order.
+  # The 'priorities' section defines the order in which GKE Autopilot attempts to provision nodes.
   priorities:
-    # 1. Highest Priority: Prefer Spot VMs (Cost-Optimized)
+    # 1. Highest Priority: The first choice is to use Spot VMs ('spot: true').
+    # This is the most cost-effective option.
     - spot: true
-    # 2. Fallback Priority: Fall back to Standard (on-demand) VMs if Spot is unavailable
+    # 2. Fallback Priority: If Spot VMs are unavailable, GKE will fall back to using standard on-demand VMs ('spot: false').
+    # This ensures that the workload can still be scheduled even if there is no Spot capacity.
     - spot: false
-  
-  # Optional: Configure GKE to automatically migrate workloads back to the higher priority (Spot) nodes 
-  # when Spot capacity becomes available. This is highly recommended for cost optimization.
+
+  # 'activeMigration' configures GKE to automatically migrate workloads.
+  # This is a powerful feature for cost optimization.
   activeMigration:
+    # When 'optimizeRulePriority' is true, GKE will automatically try to move workloads
+    # from lower-priority nodes (standard VMs in this case) back to higher-priority nodes (Spot VMs)
+    # when the higher-priority nodes become available again.
     optimizeRulePriority: true
 
-  # Optional: Define what GKE should do if all priorities are unsatisfiable.
-  # ScaleUpAnyway is generally the safest choice for availability.
+  # 'whenUnsatisfiable' defines the behavior when none of the specified priorities can be met.
+  # 'ScaleUpAnyway' is the recommended setting for most use cases, as it ensures that GKE will
+  # scale up a node pool with any available resources to prevent scheduling failures.
   whenUnsatisfiable: ScaleUpAnyway
