@@ -1,5 +1,5 @@
 
-# GKE Autopilot - Custom Compute Classes - Test for Chuck
+# GKE Autopilot - Custom Compute Classes
 ---
 
 ## Description
