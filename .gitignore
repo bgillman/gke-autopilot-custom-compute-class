@@ -1,0 +1,33 @@
+# Secrets and credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*service-account*.json
+*serviceaccount*.json
+.env
+.env.*
+!.env.example
+*_rsa
+*_rsa.pub
+id_rsa*
+*.crt
+kubeconfig
+kubeconfig.*
+.kube/config
+
+# CLI / eval / session logs and history
+*.log
+.history/
+.claude/
+.gemini/
+.bash_history
+.zsh_history
+.python_history
+
+# OS / editor cruft
+.DS_Store
+.idea/
+.vscode/
+*.swp
